@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
 import sys
-import hdfs
 
 if __name__ == "__main__":
 
@@ -48,19 +47,14 @@ if __name__ == "__main__":
         # Aggregate the contributions and update the rank using given formula
         ranks = contributions.reduceByKey(lambda x, y: x + y).mapValues(lambda sum: 0.15 + (0.85 * sum))
 
-    # Print all pageranks
-    for (link, rank) in ranks.collect():
-        print("%s has rank: %s." % (link, rank))
+    # For debug only: Print all pageranks
+    #for (link, rank) in ranks.collect():
+    #    print("%s has rank: %s." % (link, rank))
 
     # delete output directory (if exists) before saving new results
     #fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jsc.hadoopConfiguration())
     #if fs.exists(sc._jvm.org.apache.hadoop.fs.Path(outputLocation)):
     #    fs.delete(sc._jvm.org.apache.hadoop.fs.Path(outputLocation))
-        # Remove old results from HDFS
-    try:
-        client.delete(outputLocation, recursive=True)
-    except:
-        pass
 
     # Save RDD as a text file at user provided outputLocation
     ranks.saveAsTextFile(outputLocation)
