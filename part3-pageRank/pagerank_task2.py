@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # The entry point (SparkSession class)
     spark = (SparkSession
         .builder
-        .appName("PageRank_task1_" + input_workload_name)
+        .appName("PageRank_task2_" + input_workload_name)
         #.config("some.config.option", "some-value")
         #.master("spark://c220g5-110927vm-1.wisc.cloudlab.us:7077")
         .getOrCreate())
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     curatedNodes = webNodes.filter(lambda x: not x.startswith("#"))
 
     # Generates an RDD of (source, destinations) pairs
-    links = curatedNodes.map(lambda row: (row.split("\t")[0], row.split("\t")[1])).groupByKey()
+    links = curatedNodes.map(lambda row: (row.split("\t")[0], row.split("\t")[1])).groupByKey().partitionBy(16)
 
     # Generates an RDD of (source, rank) pairs. Initializes each rank to 1.0
     ranks = links.map(lambda link: (link[0], 1.0))
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             lambda x: [(destination, x[1][1] / len(x[1][0])) for destination in x[1][0]]
         )
         # Aggregate the contributions and recalculate the rank using given formula
-        ranks = contributions.reduceByKey(lambda x, y: x + y).mapValues(lambda sum: 0.15 + (0.85 * sum))
+        ranks = contributions.reduceByKey(lambda x, y: x + y).mapValues(lambda sum: 0.15 + (0.85 * sum)).partitionBy(16)
 
     # For debug only: Print all pageranks
     #for (link, rank) in ranks.collect():

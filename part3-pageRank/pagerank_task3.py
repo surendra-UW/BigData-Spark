@@ -15,12 +15,13 @@ if __name__ == "__main__":
     # The entry point (SparkSession class)
     spark = (SparkSession
         .builder
-        .appName("PageRank_task1_" + input_workload_name)
+        .appName("PageRank_task3_" + input_workload_name)
         #.config("some.config.option", "some-value")
         #.master("spark://c220g5-110927vm-1.wisc.cloudlab.us:7077")
         .getOrCreate())
 
     sc = spark.sparkContext
+    #sc.getConf().getAll()
 
     # Get web graph data into RDD
     webNodes = sc.textFile(input_path)
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     curatedNodes = webNodes.filter(lambda x: not x.startswith("#"))
 
     # Generates an RDD of (source, destinations) pairs
-    links = curatedNodes.map(lambda row: (row.split("\t")[0], row.split("\t")[1])).groupByKey()
+    links = curatedNodes.map(lambda row: (row.split("\t")[0], row.split("\t")[1])).groupByKey().partitionBy(10).cache()
 
     # Generates an RDD of (source, rank) pairs. Initializes each rank to 1.0
     ranks = links.map(lambda link: (link[0], 1.0))
